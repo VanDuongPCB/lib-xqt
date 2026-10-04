@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QWizardPage>
+#include "XGlobal.h"
+
+class XQT_EXPORT XWizardPage : public QWizardPage
+{
+    Q_OBJECT
+public:
+    using QWizardPage::QWizardPage;
+    ~XWizardPage() override = default;
+
+    XQT_WIDGET_COMMON(XWizardPage)
+};

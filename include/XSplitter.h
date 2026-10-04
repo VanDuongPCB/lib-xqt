@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QSplitter>
+#include "XGlobal.h"
+
+class XQT_EXPORT XSplitter : public QSplitter
+{
+    Q_OBJECT
+public:
+    using QSplitter::QSplitter;
+    ~XSplitter() override = default;
+
+    XQT_WIDGET_COMMON(XSplitter)
+};

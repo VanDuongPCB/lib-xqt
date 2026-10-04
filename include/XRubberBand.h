@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QRubberBand>
+#include "XGlobal.h"
+
+class XQT_EXPORT XRubberBand : public QRubberBand
+{
+    Q_OBJECT
+public:
+    using QRubberBand::QRubberBand;
+    ~XRubberBand() override = default;
+
+    XQT_WIDGET_COMMON(XRubberBand)
+};

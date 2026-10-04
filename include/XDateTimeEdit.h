@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QDateTimeEdit>
+#include "XGlobal.h"
+
+class XQT_EXPORT XDateTimeEdit : public QDateTimeEdit
+{
+    Q_OBJECT
+public:
+    using QDateTimeEdit::QDateTimeEdit;
+    ~XDateTimeEdit() override = default;
+
+    XQT_WIDGET_COMMON(XDateTimeEdit)
+};

@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QListWidget>
+#include "XGlobal.h"
+
+class XQT_EXPORT XListWidget : public QListWidget
+{
+    Q_OBJECT
+public:
+    using QListWidget::QListWidget;
+    ~XListWidget() override = default;
+
+    XQT_WIDGET_COMMON(XListWidget)
+};

@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QColorDialog>
+#include "XGlobal.h"
+
+class XQT_EXPORT XColorDialog : public QColorDialog
+{
+    Q_OBJECT
+public:
+    using QColorDialog::QColorDialog;
+    ~XColorDialog() override = default;
+
+    XQT_WIDGET_COMMON(XColorDialog)
+};

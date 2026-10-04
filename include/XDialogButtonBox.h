@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QDialogButtonBox>
+#include "XGlobal.h"
+
+class XQT_EXPORT XDialogButtonBox : public QDialogButtonBox
+{
+    Q_OBJECT
+public:
+    using QDialogButtonBox::QDialogButtonBox;
+    ~XDialogButtonBox() override = default;
+
+    XQT_WIDGET_COMMON(XDialogButtonBox)
+};

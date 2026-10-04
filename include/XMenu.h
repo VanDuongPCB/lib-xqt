@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QMenu>
+#include "XGlobal.h"
+
+class XQT_EXPORT XMenu : public QMenu
+{
+    Q_OBJECT
+public:
+    using QMenu::QMenu;
+    ~XMenu() override = default;
+
+    XQT_WIDGET_COMMON(XMenu)
+};

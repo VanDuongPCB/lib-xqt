@@ -1,0 +1,1 @@
+#include "XProgressDialog.h"

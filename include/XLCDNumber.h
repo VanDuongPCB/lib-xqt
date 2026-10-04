@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QLCDNumber>
+#include "XGlobal.h"
+
+class XQT_EXPORT XLCDNumber : public QLCDNumber
+{
+    Q_OBJECT
+public:
+    using QLCDNumber::QLCDNumber;
+    ~XLCDNumber() override = default;
+
+    XQT_WIDGET_COMMON(XLCDNumber)
+};

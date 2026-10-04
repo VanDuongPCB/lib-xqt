@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QTreeWidget>
+#include "XGlobal.h"
+
+class XQT_EXPORT XTreeWidget : public QTreeWidget
+{
+    Q_OBJECT
+public:
+    using QTreeWidget::QTreeWidget;
+    ~XTreeWidget() override = default;
+
+    XQT_WIDGET_COMMON(XTreeWidget)
+};

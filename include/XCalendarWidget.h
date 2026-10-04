@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QCalendarWidget>
+#include "XGlobal.h"
+
+class XQT_EXPORT XCalendarWidget : public QCalendarWidget
+{
+    Q_OBJECT
+public:
+    using QCalendarWidget::QCalendarWidget;
+    ~XCalendarWidget() override = default;
+
+    XQT_WIDGET_COMMON(XCalendarWidget)
+};

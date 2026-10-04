@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QComboBox>
+#include "XGlobal.h"
+
+class XQT_EXPORT XComboBox : public QComboBox
+{
+    Q_OBJECT
+public:
+    using QComboBox::QComboBox;
+    ~XComboBox() override = default;
+
+    XQT_WIDGET_COMMON(XComboBox)
+};

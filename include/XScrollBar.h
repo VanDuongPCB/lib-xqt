@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QScrollBar>
+#include "XGlobal.h"
+
+class XQT_EXPORT XScrollBar : public QScrollBar
+{
+    Q_OBJECT
+public:
+    using QScrollBar::QScrollBar;
+    ~XScrollBar() override = default;
+
+    XQT_WIDGET_COMMON(XScrollBar)
+};

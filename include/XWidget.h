@@ -1,0 +1,14 @@
+#pragma once
+
+#include <QWidget>
+#include "XGlobal.h"
+
+class XQT_EXPORT XWidget : public QWidget
+{
+    Q_OBJECT
+public:
+    using QWidget::QWidget;
+    ~XWidget() override = default;
+
+    XQT_WIDGET_COMMON(XWidget)
+};
