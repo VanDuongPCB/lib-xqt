@@ -388,7 +388,8 @@ void XStyleManager::updateWatcher()
     if (!oldDirs.isEmpty())
         m_watcher->removePaths(oldDirs);
 
-    if (!m_watchEnabled || m_themeDir.isEmpty())
+    // Resource paths (":/themes/...") cannot be watched; only real directories are.
+    if (!m_watchEnabled || m_themeDir.isEmpty() || m_themeDir.startsWith(':'))
         return;
 
     QStringList paths;
