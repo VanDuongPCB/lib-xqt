@@ -22,6 +22,32 @@ namespace
         return qMax(1, bar->sizeHint().height() - overlap);
     }
 
+    bool isVerticalBar(const QTabBar* bar)
+    {
+        if (!bar)
+            return false;
+        switch (bar->shape())
+        {
+        case QTabBar::RoundedWest:
+        case QTabBar::RoundedEast:
+        case QTabBar::TriangularWest:
+        case QTabBar::TriangularEast:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    // Width of the column of tabs as the user sees it (vertical bars), the
+    // counterpart of tabRowHeight().
+    int tabColumnWidth(const QTabBar* bar)
+    {
+        if (!bar)
+            return 0;
+        const int overlap = bar->style()->pixelMetric(QStyle::PM_TabBarBaseOverlap, nullptr, bar);
+        return qMax(1, bar->sizeHint().width() - overlap);
+    }
+
     // QTabWidget positions corner widgets by their sizeHint(); a plain QWidget
     // reports an invalid hint, so the spacer must provide one.
     class FixedWidthSpacer : public QWidget
@@ -55,15 +81,21 @@ namespace
 
         QWidget* child() const { return m_child; }
 
+        // Horizontal bar: width from the child, height = tab row.
+        // Vertical bar:   width = tab column, height from the child.
         QSize sizeHint() const override
         {
             const QSize c = m_child ? m_child->sizeHint() : QSize(0, 0);
+            if (isVerticalBar(m_bar))
+                return QSize(tabColumnWidth(m_bar), c.height());
             return QSize(c.width(), tabRowHeight(m_bar));
         }
 
         QSize minimumSizeHint() const override
         {
             const QSize c = m_child ? m_child->minimumSizeHint() : QSize(0, 0);
+            if (isVerticalBar(m_bar))
+                return QSize(tabColumnWidth(m_bar), c.height());
             return QSize(c.width(), tabRowHeight(m_bar));
         }
 
@@ -132,6 +164,16 @@ int XTabWidget::iconTextSpacing() const
 void XTabWidget::setIconTextSpacing(int spacing)
 {
     m_tabBar->setIconTextSpacing(spacing);
+}
+
+bool XTabWidget::rotateVerticalText() const
+{
+    return m_tabBar->rotateVerticalText();
+}
+
+void XTabWidget::setRotateVerticalText(bool rotate)
+{
+    m_tabBar->setRotateVerticalText(rotate);
 }
 
 // ---------------------------------------------------------------------------
@@ -265,6 +307,27 @@ void XTabWidget::alignTabRowCornerWidgets()
     const QRect bar = m_tabBar->geometry();
     if (!bar.isValid())
         return;
+
+    if (isVerticalBar(m_tabBar))
+    {
+        // QTabWidget reserves the corner widgets' heights above and below a
+        // vertical tab bar but gives them no geometry (QCommonStyle returns an
+        // empty SE_TabWidgetLeft/RightCorner for West/East). Place them ourselves.
+        const int width = tabColumnWidth(m_tabBar);
+        const int left = (m_tabBar->shape() == QTabBar::RoundedEast || m_tabBar->shape() == QTabBar::TriangularEast)
+                             ? bar.right() + 1 - width : bar.left();
+        if (m_leftCornerHost)
+        {
+            const int h = m_leftCornerHost->sizeHint().height();
+            m_leftCornerHost->setGeometry(left, bar.top() - h, width, h);
+        }
+        if (m_rightCornerHost)
+        {
+            const int h = m_rightCornerHost->sizeHint().height();
+            m_rightCornerHost->setGeometry(left, bar.bottom() + 1, width, h);
+        }
+        return;
+    }
 
     const int height = tabRowHeight(m_tabBar);
     if (m_leftCornerHost)

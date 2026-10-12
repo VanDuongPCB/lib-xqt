@@ -97,14 +97,37 @@ void XTabBar::setTabPaddingTop(int top)       { QMargins m = m_padding; m.setTop
 void XTabBar::setTabPaddingRight(int right)   { QMargins m = m_padding; m.setRight(right);   setTabPadding(m); }
 void XTabBar::setTabPaddingBottom(int bottom) { QMargins m = m_padding; m.setBottom(bottom); setTabPadding(m); }
 
+bool XTabBar::rotateVerticalText() const
+{
+    return m_rotateVerticalText;
+}
+
+void XTabBar::setRotateVerticalText(bool rotate)
+{
+    if (m_rotateVerticalText == rotate)
+        return;
+    m_rotateVerticalText = rotate;
+    relayoutTabs();
+}
+
+bool XTabBar::isVerticalShape() const
+{
+    return !isHorizontalShape(shape());
+}
+
 bool XTabBar::usesCustomLayout() const
 {
-    return (m_style != Qt::ToolButtonFollowStyle || !m_padding.isNull()) && isHorizontalShape(shape());
+    if (isVerticalShape())
+        return !m_rotateVerticalText;
+    return m_style != Qt::ToolButtonFollowStyle || !m_padding.isNull();
 }
 
 Qt::ToolButtonStyle XTabBar::effectiveStyle() const
 {
-    return m_style == Qt::ToolButtonFollowStyle ? Qt::ToolButtonTextBesideIcon : m_style;
+    if (m_style != Qt::ToolButtonFollowStyle)
+        return m_style;
+    // Default look: beside each other in a row, stacked in a column.
+    return isVerticalShape() ? Qt::ToolButtonTextUnderIcon : Qt::ToolButtonTextBesideIcon;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,6 +143,8 @@ QSize XTabBar::tabSizeHint(int index) const
     QSize size = QTabBar::tabSizeHint(index);
     if (!usesCustomLayout())
         return size;
+    if (isVerticalShape())
+        return verticalTabSizeHint(index, size);
 
     // our extra padding applies to every custom layout
     size.rwidth() += m_padding.left() + m_padding.right();
@@ -156,10 +181,61 @@ QSize XTabBar::tabSizeHint(int index) const
     return size;
 }
 
+// Vertical bar, text not rotated. QTabBar's own hint for a vertical bar is
+//     width  = max(textH, iconH) + vframe                 (across the bar)
+//     height = textW + iconW (+4 if icon) + hframe        (along the bar)
+// i.e. the horizontal layout turned by 90 degrees. We keep the style's frame
+// sizes but lay the content out upright: hframe goes with the width again,
+// vframe with the height.
+QSize XTabBar::verticalTabSizeHint(int index, const QSize& base) const
+{
+    const QFontMetrics fm = fontMetrics();
+    const bool hasIcon = !tabIcon(index).isNull();
+    const bool hasText = !tabText(index).isEmpty();
+    const QSize icon = hasIcon ? iconSize() : QSize(0, 0);
+    const int textW = hasText ? fm.horizontalAdvance(tabText(index)) : 0;
+    const int textH = fm.height();
+    const int qtSpacing = hasIcon ? 4 : 0;               // spacing used by QTabBar's own hint
+
+    const int frameAlong = base.height() - (textW + icon.width() + qtSpacing);   // hframe + style extra
+    const int frameAcross = base.width() - qMax(textH, icon.height());           // vframe + style extra
+
+    const Qt::ToolButtonStyle style = effectiveStyle();
+    const bool showIcon = style != Qt::ToolButtonTextOnly && hasIcon;
+    const bool showText = style != Qt::ToolButtonIconOnly && hasText;
+
+    int contentW = 0;
+    int contentH = textH;                                // QTabBar also reserves a text line for empty text
+    if (showIcon && showText && style == Qt::ToolButtonTextUnderIcon)
+    {
+        contentW = qMax(icon.width(), textW);
+        contentH = icon.height() + m_spacing + textH;
+    }
+    else if (showIcon && showText)                      // TextBesideIcon
+    {
+        contentW = icon.width() + m_spacing + textW;
+        contentH = qMax(icon.height(), textH);
+    }
+    else if (showIcon)
+    {
+        contentW = icon.width();
+        contentH = icon.height();
+    }
+    else if (showText)
+    {
+        contentW = textW;
+    }
+
+    return QSize(contentW + qMax(0, frameAlong) + m_padding.left() + m_padding.right(),
+                 contentH + qMax(0, frameAcross) + m_padding.top() + m_padding.bottom());
+}
+
 QSize XTabBar::minimumTabSizeHint(int index) const
 {
     if (!usesCustomLayout())
         return QTabBar::minimumTabSizeHint(index);
+    if (isVerticalShape())
+        return tabSizeHint(index);                       // tabs stack vertically, no need to shrink
 
     // QTabBar's own minimum elides the text with elideMode(); with ElideNone
     // (Fusion, Windows) that is the full text, so tabs could never shrink when
@@ -192,18 +268,20 @@ void XTabBar::paintEvent(QPaintEvent* event)
     }
 
     QStylePainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
 
     const int current = currentIndex();
-    if (drawBase())
-    {
-        QStyleOptionTabBarBase base;
-        base.initFrom(this);
-        base.shape = shape();
-        base.documentMode = documentMode();
-        base.tabBarRect = rect();
-        base.selectedTabRect = current >= 0 ? tabRect(current) : QRect();
-        painter.drawPrimitive(QStyle::PE_FrameTabBarBase, base);
-    }
+    // Skip drawing base frame to avoid border
+    // if (drawBase())
+    // {
+    //     QStyleOptionTabBarBase base;
+    //     base.initFrom(this);
+    //     base.shape = shape();
+    //     base.documentMode = documentMode();
+    //     base.tabBarRect = rect();
+    //     base.selectedTabRect = current >= 0 ? tabRect(current) : QRect();
+    //     painter.drawPrimitive(QStyle::PE_FrameTabBarBase, base);
+    // }
 
     // Unselected tabs first, selected one last so it overlaps its neighbours.
     for (int i = 0; i < count(); ++i)
@@ -258,6 +336,8 @@ void XTabBar::drawTab(QPainter& painter, int index)
         QStyleOptionTab label = option;
         label.icon = QIcon();
         label.text = fontMetrics().elidedText(tabText(index), elide, textRect.width());
+        if (isVerticalShape())
+            label.shape = QTabBar::RoundedNorth;        // the style rotates text for West/East; we want it upright
         const QRect styleText = style()->subElementRect(QStyle::SE_TabBarTabText, &label, this);
         const QPoint from = styleText.isValid() ? styleText.center() : option.rect.center();
         painter.save();
@@ -276,9 +356,21 @@ void XTabBar::layoutTab(const QStyleOptionTab& option, int index, QRect& iconRec
 
     // Content box: what the style would give the label when there is no icon
     // (excludes paddings and the close/side buttons).
-    QStyleOptionTab plain = option;
-    plain.icon = QIcon();
-    QRect content = style()->subElementRect(QStyle::SE_TabBarTabText, &plain, this);
+    QRect content;
+    if (isVerticalShape())
+    {
+        // For West/East the style computes the text rect in rotated space, so
+        // take the tab rect minus the style's frame instead.
+        const int hframe = style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &option, this);
+        const int vframe = style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &option, this);
+        content = option.rect.adjusted(hframe / 2, vframe / 2, -hframe / 2, -vframe / 2);
+    }
+    else
+    {
+        QStyleOptionTab plain = option;
+        plain.icon = QIcon();
+        content = style()->subElementRect(QStyle::SE_TabBarTabText, &plain, this);
+    }
     if (!content.isValid())
         content = option.rect;
     content = content.marginsRemoved(m_padding);         // our extra padding

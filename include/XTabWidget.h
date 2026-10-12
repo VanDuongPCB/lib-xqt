@@ -19,9 +19,15 @@ class XTabBar;
         auto* login = new XToolButton;
         tabWidget->setTabBarCornerWidget(login, Qt::TopLeftCorner);
 
+    Vertical tab bars (setTabPosition(QTabWidget::West/East)) rotate the text by
+    default; setRotateVerticalText(false) keeps it horizontal with the icon above
+    (see XTabBar). Tab row widgets then sit above (left corner) and below (right
+    corner) the column of tabs, as wide as the tabs.
+
     From a style sheet:
         XTabWidget { qproperty-toolButtonStyle: ToolButtonTextUnderIcon;
-                     qproperty-tabPaddingLeft: 12; qproperty-tabBarLeftMargin: 16; }
+                     qproperty-tabPaddingLeft: 12; qproperty-tabBarLeftMargin: 16;
+                     qproperty-rotateVerticalText: false; }
 */
 class XQT_EXPORT XTabWidget : public QTabWidget
 {
@@ -31,6 +37,7 @@ class XQT_EXPORT XTabWidget : public QTabWidget
     Q_PROPERTY(QMargins tabPadding READ tabPadding WRITE setTabPadding)
     Q_PROPERTY(int tabPaddingLeft READ tabPaddingLeft WRITE setTabPaddingLeft)
     Q_PROPERTY(int tabBarLeftMargin READ tabBarLeftMargin WRITE setTabBarLeftMargin)
+    Q_PROPERTY(bool rotateVerticalText READ rotateVerticalText WRITE setRotateVerticalText)
 public:
     explicit XTabWidget(QWidget* parent = nullptr);
     ~XTabWidget() override = default;
@@ -42,6 +49,10 @@ public:
 
     int iconTextSpacing() const;
     void setIconTextSpacing(int spacing);
+
+    // Vertical tab bars: rotated text (default) or horizontal text (forwarded to XTabBar)
+    bool rotateVerticalText() const;
+    void setRotateVerticalText(bool rotate);
 
     // Padding inside every tab (forwarded to XTabBar)
     QMargins tabPadding() const;

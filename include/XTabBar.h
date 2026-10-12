@@ -22,8 +22,18 @@
     From a style sheet:
         XTabBar { qproperty-toolButtonStyle: ToolButtonTextUnderIcon; qproperty-tabPaddingLeft: 12; }
 
-    The custom layout applies to horizontal tab bars (RoundedNorth/South,
-    TriangularNorth/South). Vertical tab bars keep the default QTabBar painting.
+    Horizontal tab bars (RoundedNorth/South, TriangularNorth/South) use the
+    custom layout as soon as a style or a padding is set.
+
+    Vertical tab bars (RoundedWest/East, TriangularWest/East) rotate the text
+    by 90 degrees by default, like QTabBar. With
+
+        tabBar->setRotateVerticalText(false);      // QSS: qproperty-rotateVerticalText: false
+
+    the text stays horizontal and the tabs are laid out like tool buttons
+    stacked in a column (FollowStyle then means TextUnderIcon). The tab width
+    follows the widest icon/text.
+
     Tab text color and font still come from the style / style sheet
     (QTabBar::tab { color: ... }).
 */
@@ -37,6 +47,7 @@ class XQT_EXPORT XTabBar : public QTabBar
     Q_PROPERTY(int tabPaddingTop READ tabPaddingTop WRITE setTabPaddingTop)
     Q_PROPERTY(int tabPaddingRight READ tabPaddingRight WRITE setTabPaddingRight)
     Q_PROPERTY(int tabPaddingBottom READ tabPaddingBottom WRITE setTabPaddingBottom)
+    Q_PROPERTY(bool rotateVerticalText READ rotateVerticalText WRITE setRotateVerticalText)
 public:
     explicit XTabBar(QWidget* parent = nullptr);
     ~XTabBar() override = default;
@@ -64,6 +75,12 @@ public:
     int tabPaddingBottom() const;
     void setTabPaddingBottom(int bottom);
 
+    // Vertical tab bars only (West/East). true (default): text rotated 90 degrees
+    // as QTabBar does. false: text horizontal, icon above text (or the chosen
+    // toolButtonStyle), tabs stacked in a column.
+    bool rotateVerticalText() const;
+    void setRotateVerticalText(bool rotate);
+
     XQT_WIDGET_COMMON(XTabBar)
 
 signals:
@@ -76,8 +93,10 @@ protected:
 
 private:
     void relayoutTabs();                      // QTabBar caches tab geometry; force it to recompute
-    bool usesCustomLayout() const;            // (style != FollowStyle or padding set) and horizontal shape
+    bool isVerticalShape() const;             // West/East
+    bool usesCustomLayout() const;            // horizontal: style != FollowStyle or padding set; vertical: !rotateVerticalText
     Qt::ToolButtonStyle effectiveStyle() const;   // FollowStyle paints like TextBesideIcon
+    QSize verticalTabSizeHint(int index, const QSize& base) const;
     void drawTab(QPainter& painter, int index);
     void layoutTab(const QStyleOptionTab& option, int index, QRect& iconRect, QRect& textRect) const;
 
@@ -85,4 +104,5 @@ private:
     Qt::ToolButtonStyle m_style = Qt::ToolButtonFollowStyle;
     int m_spacing = 4;
     QMargins m_padding;
+    bool m_rotateVerticalText = true;
 };
